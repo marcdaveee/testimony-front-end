@@ -1,13 +1,22 @@
+import { ILoginFormState, login } from "@/actions/auth-action";
 import Field from "@/app/_components/field";
 import Header from "@/app/_components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+
 import Link from "next/link";
+import { useActionState } from "react";
 
 export default async function LoginPage() {
+  const initialState: ILoginFormState = {
+    success: false,
+    message: "",
+  };
+
+  const [state, formAction, isPending] = useActionState(login, initialState);
+
   return (
     <div className="h-[60dvh] flex flex-col justify-center items-center ">
       <Card className="w-[450px]">
@@ -15,18 +24,25 @@ export default async function LoginPage() {
           <Header>Login</Header>
         </CardHeader>
         <CardContent>
-          <form className="flex flex-col gap-y-6">
+          <form action={formAction} className="flex flex-col gap-y-6">
             <div className="space-y-4">
               <Field>
                 <Label>Email</Label>
-                <Input type="text" />
-                <p className="text-destructive text-sm"></p>
+                <Input type="text" defaultValue={state.inputFields?.email} />
+                <p className="text-destructive text-sm">
+                  {state.errors?.email && state.errors?.email[0]}
+                </p>
               </Field>
 
               <Field>
                 <Label>Password</Label>
-                <Input type="password" />
-                <p className="text-destructive text-sm"></p>
+                <Input
+                  type="password"
+                  defaultValue={state.inputFields?.password}
+                />
+                <p className="text-destructive text-sm">
+                  {state.errors?.password && state.errors?.password[0]}
+                </p>
               </Field>
             </div>
 
