@@ -6,6 +6,6 @@ export default function Field({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn(`flex flex-col gap-y-3`, className)}>{children}</div>
+    <div className={cn(`flex flex-col gap-y-2`, className)}>{children}</div>
   );
 }

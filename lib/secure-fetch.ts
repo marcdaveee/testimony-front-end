@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import { deleteSession, updateSessionToken } from "./session";
 import { redirect } from "next/navigation";
+import { deleteSession, updateSessionToken } from "./session";
 
 // Fetch wrapper in accessing authenticated endpoints
 export default async function SecureFetch(
@@ -23,10 +23,10 @@ export default async function SecureFetch(
     updatedReqOptions
   );
 
-  if (!res.ok && res.status == 401) {
+  if (!res.ok) {
     const errorResponseObj = await res.json();
 
-    if (errorResponseObj.isTokenExpired == true) {
+    if (res.status == 401 && errorResponseObj.isTokenExpired == true) {
       // hit refresh token endpoint
 
       const refReshEndpointResponse = await fetch(
@@ -45,8 +45,19 @@ export default async function SecureFetch(
       const newAccessToken = responseObj.access_token;
 
       await updateSessionToken(newAccessToken);
+    } else {
+      const error = new Error(
+        errorResponseObj.message || `API request failed status ${res.status} `
+      );
+
+      (error as any).status = res.status;
+      (error as any).data = errorResponseObj;
+
+      throw error;
     }
   }
 
-  return res;
+  const data = await res.json();
+
+  return data;
 }
