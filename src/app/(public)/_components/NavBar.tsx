@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { LogIn, SignpostBig } from "lucide-react";
+import Link from "next/link";
 
 export function NavBar() {
   return (
@@ -11,9 +12,11 @@ export function NavBar() {
           <Button size={"lg"} variant={"default"}>
             Share a Testimony <SignpostBig />
           </Button>
-          <Button size={"lg"} variant={"outline"}>
-            Log In <LogIn />
-          </Button>
+          <Link href={"/login"}>
+            <Button size={"lg"} variant={"outline"}>
+              Log In <LogIn />
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
