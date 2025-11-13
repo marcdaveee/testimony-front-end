@@ -69,48 +69,83 @@ export async function login(initialState: ILoginFormState, formData: FormData) {
     };
 
     return validState;
-  } catch (error: any) {
-    console.error(error);
+  } catch (error: unknown) {
+    console.error(`API respond an error: ${error}`);
 
-    const status = (error as any)?.status;
-    const errorData = (error as any)?.data;
-
-    const errorMessage = errorData.message;
-    const errorFields = errorData.errors as string[];
-
-    console.error(errorData);
-
-    let emailErrors: string[] = [];
-
-    let passwordErrors: string[] = [];
-
-    if (errorFields) {
-      errorFields.forEach(err => {
-        if (err.split(" ")[0].toLowerCase().includes("email")) {
-          let msg = err.replace("email ", "");
-          emailErrors.push(msg);
-        }
-      });
-      errorFields.forEach(err => {
-        if (err.split(" ")[0].toLowerCase().includes("password")) {
-          let msg = err.replace("password ", "");
-          passwordErrors.push(msg);
-        }
-      });
-    }
-
-    const invalidState: ILoginFormState = {
+    // initial state whenever an error occured
+    let invalidState: ILoginFormState = {
       success: false,
-      message: errorData.message || "An unexpected error occured during login.",
-      inputFields: inputs,
-      errors:
-        errorFields && errorFields.length
-          ? {
-              email: emailErrors,
-              password: passwordErrors,
-            }
-          : undefined,
+      message: "An unexpected error occured during login.",
     };
+
+    if (typeof error == "object") {
+      // Error shape we throw from Secure Fetch function
+      const status = (error as any)?.status;
+      const errorData = (error as any)?.data;
+
+      // Handle error message display
+      const errorMessage = errorData.message;
+      const errorFields: string[] = [];
+
+      if (
+        Array.isArray(errorMessage) &&
+        errorMessage.every(item => typeof item === "string")
+      ) {
+        console.error("Error Message: ", errorMessage);
+
+        // Assign each error message in its corresponding input fields
+        let emailErrors: string[] = [];
+        let passwordErrors: string[] = [];
+
+        if (errorMessage) {
+          errorMessage.forEach(err => {
+            if (err.split(" ")[0].toLowerCase().includes("email")) {
+              // let msg = err.replace("email ", "");
+              let msg = "";
+              err.split(" ").forEach(str => {
+                if (!str.includes("email")) {
+                  msg = msg + str + " ";
+                }
+              });
+              // Remove any white space
+              msg = msg.trimEnd();
+              // Ensure first letter is always capital
+              msg = msg[0].toUpperCase() + msg.slice(1);
+              emailErrors.push(msg);
+            }
+          });
+          errorMessage.forEach(err => {
+            if (err.split(" ")[0].toLowerCase().includes("password")) {
+              // let msg = err.replace("password ", "");
+              let msg = "";
+
+              err.split(" ").forEach(str => {
+                if (!str.includes("password")) {
+                  msg = msg + str + " ";
+                }
+              });
+              // Remove any white space
+              msg = msg.trimEnd();
+              // Ensure first letter is always capital
+              msg = msg[0].toUpperCase() + msg.slice(1);
+              passwordErrors.push(msg);
+            }
+          });
+        }
+
+        invalidState.message = "Invalid credentials";
+        invalidState.inputFields = inputs;
+        invalidState.errors = {
+          email: emailErrors.length > 0 ? emailErrors : undefined,
+          password: passwordErrors.length > 0 ? emailErrors : undefined,
+        };
+      } else if (typeof errorMessage === "string") {
+        invalidState.message = errorMessage;
+      } else {
+        // unknown shape of the error message
+        console.error(errorMessage);
+      }
+    }
 
     return invalidState;
   }
