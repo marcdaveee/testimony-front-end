@@ -1,8 +1,8 @@
 "use server";
 
+import { createSession } from "@/lib/session";
 import z from "zod";
 import SecureFetch from "../lib/secure-fetch";
-import { createSession } from "../lib/session";
 
 export interface ILoginFormState {
   success: boolean;
@@ -53,7 +53,7 @@ export async function login(initialState: ILoginFormState, formData: FormData) {
       method: "POST",
       body: requestBodyPayload,
     });
-
+    console.log(`Response Data: ${data}`);
     // create session
     await createSession({
       user: {
@@ -84,7 +84,7 @@ export async function login(initialState: ILoginFormState, formData: FormData) {
       const errorData = (error as any)?.data;
 
       // Handle error message display
-      const errorMessage = errorData.message;
+      const errorMessage = errorData?.message;
       const errorFields: string[] = [];
 
       if (
@@ -143,7 +143,8 @@ export async function login(initialState: ILoginFormState, formData: FormData) {
         invalidState.message = errorMessage;
       } else {
         // unknown shape of the error message
-        console.error(errorMessage);
+        console.error(`Thrown Error: ${error}`);
+        console.error(`Message: ${errorMessage}`);
       }
     }
 
