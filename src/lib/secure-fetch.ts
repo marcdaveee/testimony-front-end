@@ -26,7 +26,10 @@ export default async function SecureFetch(
   if (!res.ok) {
     const errorResponseObj = await res.json();
 
-    if (res.status == 401 && errorResponseObj.isTokenExpired == true) {
+    if (
+      (res.status == 401 && errorResponseObj.message.includes("token")) ||
+      errorResponseObj.message.includes("expire") == true
+    ) {
       // hit refresh token endpoint
 
       const refReshEndpointResponse = await fetch(
