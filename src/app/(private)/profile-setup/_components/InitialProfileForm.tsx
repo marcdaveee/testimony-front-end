@@ -21,10 +21,10 @@ export default function ({
   useEffect(() => {
     if (hasInitialProfile) {
       //
-      //   toast.warning("Profile already exist");
+      toast.warning("Profile already exist");
 
       //Todo: Redirect to Profile Page
-      redirect("/login");
+      redirect("/profile");
     }
   }, [hasInitialProfile]);
 

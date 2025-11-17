@@ -1,5 +1,7 @@
-import { jwtDecrypt, jwtVerify, SignJWT } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
+
+import "server-only";
 
 interface UserPayload {
   id: number | string;
@@ -87,6 +89,8 @@ export async function deleteSession() {
   const cookieStore = await cookies();
 
   // Delete session data
-  cookieStore.delete("user_token");
+
   cookieStore.delete("access_token");
+
+  cookieStore.delete("user_token");
 }

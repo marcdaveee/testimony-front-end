@@ -1,6 +1,7 @@
+"use server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { deleteSession, updateSessionToken } from "./session";
+import { updateSessionToken } from "./session";
 
 // Fetch wrapper in accessing authenticated endpoints
 export default async function SecureFetch(
@@ -26,29 +27,37 @@ export default async function SecureFetch(
   if (!res.ok) {
     const errorResponseObj = await res.json();
 
-    if (
-      (res.status == 401 && errorResponseObj.message.includes("token")) ||
-      errorResponseObj.message.includes("expire") == true
-    ) {
-      // hit refresh token endpoint
+    // if unauthorized
+    if (res.status == 401) {
+      // check if  access token is expired
+      if (
+        errorResponseObj.message.includes("token") ||
+        errorResponseObj.message.includes("expire") == true
+      ) {
+        // Send request to Refresh token endpoint
+        const refReshEndpointResponse = await fetch(
+          `${process.env.BASE_API_URL}${"/refresh-token"}`,
+          { credentials: "include" }
+        );
 
-      const refReshEndpointResponse = await fetch(
-        `${process.env.BASE_API_URL}${"/refresh-token"}`,
-        { credentials: "include" }
-      );
-
-      if (!refReshEndpointResponse.ok) {
-        console.error("Session expired");
-
-        await deleteSession();
+        // Redirect to login if refresh token is not successful
+        if (!refReshEndpointResponse.ok) {
+          console.error("Session expired");
+          cookieStore.delete("access_token");
+          cookieStore.delete("user_token");
+          redirect("/login");
+        } else {
+          // Update token
+          const responseObj = await refReshEndpointResponse.json();
+          const newAccessToken = responseObj.access_token;
+          await updateSessionToken(newAccessToken);
+        }
+      } else {
+        // redirect to login
         redirect("/login");
       }
-
-      const responseObj = await refReshEndpointResponse.json();
-      const newAccessToken = responseObj.access_token;
-
-      await updateSessionToken(newAccessToken);
     } else {
+      // Handle other status codes here!
       const error = new Error(
         errorResponseObj.message || `API request failed status ${res.status} `
       );
@@ -60,6 +69,7 @@ export default async function SecureFetch(
     }
   }
 
+  // Return response data
   const data = await res.json();
 
   return data;
