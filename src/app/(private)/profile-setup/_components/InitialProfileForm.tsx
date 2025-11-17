@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { User } from "lucide-react";
 import { redirect } from "next/navigation";
 import { useActionState, useEffect } from "react";
+import { toast } from "sonner";
 
 export default function ({
   initialState,
@@ -31,6 +32,17 @@ export default function ({
     createInitialProfileAction,
     initialState
   );
+
+  useEffect(() => {
+    if (state.message) {
+      if (!state.success) {
+        toast.error(state.message);
+      } else {
+        toast.success(state.message);
+        // Redirect to Feed!
+      }
+    }
+  }, [state]);
 
   return (
     <form action={formAction}>
