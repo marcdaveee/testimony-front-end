@@ -1,5 +1,6 @@
 "use server";
 import SecureFetch from "@/lib/secure-fetch";
+import { deleteSession } from "@/lib/session";
 import { IUser } from "@/types/user.type";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
@@ -58,7 +59,10 @@ export async function getUserProfile() {
 
     // if not found
     if (status == 404) {
-      redirect("profile-setup");
+      redirect("/profile-setup");
+    } else if (status == 401) {
+      await deleteSession();
+      redirect("/login");
     } else {
       const errorDataObj = (error as any)?.data;
 
@@ -68,8 +72,8 @@ export async function getUserProfile() {
           : errorDataObj.message
         : "An unknown error occured while retrieving profile details.";
 
-      console.error("API returned error obj with data: ", errorDataObj);
-      console.error("API returned error message: ", errorMessage);
+      console.log("API returned log obj with data: ", errorDataObj);
+      console.log("API returned error message: ", errorMessage);
 
       throw new Error(`Error occured with ${status} status: ${errorMessage}`);
     }

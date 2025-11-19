@@ -45,6 +45,13 @@ export async function decryptUserPayload(session: string | undefined = "") {
   return userPayload;
 }
 
+// Retrieve access token of the current user
+export async function getApiAccessToken() {
+  const cookieStore = await cookies();
+
+  return cookieStore.get("access_token")?.value;
+}
+
 // create session for current user
 export async function createSession(sessionData: SessionPayload) {
   const encryptedUserPayload = await encryptUserPayload(sessionData.user);
