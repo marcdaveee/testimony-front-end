@@ -1,6 +1,9 @@
-// "use server";
-import { redirect } from "next/navigation";
-import { getApiAccessToken } from "./session";
+"use server";
+import {
+  getApiAccessToken,
+  invalidateAndRedirect,
+  updateSessionToken,
+} from "./session";
 
 // Fetch wrapper in accessing authenticated endpoints
 export default async function SecureFetch(
@@ -36,19 +39,21 @@ export default async function SecureFetch(
         errorResponseObj.message.includes("expire") == true
       ) {
         // Send request to NEXT JS Refresh token endpoint
-        // const refReshEndpointResponse = await fetch(
-        //   `${process.env.BASE_API_URL}${"/refresh-token"}`,
-        //   { credentials: "include" }
-        // );
         const refReshEndpointResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}${"/api/auth/refresh-token"}`,
-          {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-type": "application/json" },
-          }
-          // { credentials: "include" }
+          `${process.env.BASE_API_URL}${"/refresh-token"}`,
+          { credentials: "include" }
         );
+        // const refReshEndpointResponse = await fetch(
+        //   `${process.env.NEXT_PUBLIC_APP_URL}${"/api/auth/refresh-token"}`,
+        //   {
+        //     method: "POST",
+        //     credentials: "include",
+        //     headers: {
+        //       "Content-type": "application/json",
+        //       Authorization: `Bearer ${token}`,
+        //     },
+        //   }
+        // );
 
         // Redirect to login if refresh token is not successful
         if (!refReshEndpointResponse.ok) {
@@ -56,13 +61,16 @@ export default async function SecureFetch(
           // cookieStore.delete("access_token");
           // cookieStore.delete("user_token");
           // await deleteSession();
-          redirect("/login");
+          // redirect("/login");
+          await invalidateAndRedirect();
         } else {
           // Update token and Retry again
           const responseObj = await refReshEndpointResponse.json();
           // const newAccessToken = responseObj.access_token;
           const newAccessToken = await getApiAccessToken(); // retrieve the new access token
-          // await updateSessionToken(newAccessToken);
+          if (newAccessToken) {
+            await updateSessionToken(newAccessToken);
+          }
 
           // retry request again
 

@@ -1,13 +1,23 @@
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const cookies = request.cookies.get("access_token");
+    const cookieStore = await cookies();
+    // const cookies = request.cookies.get("access_token")?.value;
 
     // const access_token = cookieStore.get("access_token")?.value;
-    const access_token = cookies;
+    // const access_token = cookies;
 
-    if (!access_token) {
+    const authHeader = request.headers.get("Authorization");
+
+    if (!authHeader) {
+      return NextResponse.json({ error: "No access token" }, { status: 401 });
+    }
+
+    const [type, access_token] = authHeader.split(" ");
+
+    if (type != "Bearer" && !access_token) {
       return NextResponse.json({ error: "No access token" }, { status: 401 });
     }
 
@@ -17,7 +27,7 @@ export async function POST(request: NextRequest) {
       {
         headers: {
           "Content-type": "application/json",
-          //   Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${access_token}`,
         },
         method: "POST",
         credentials: "include",

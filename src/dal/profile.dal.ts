@@ -1,6 +1,5 @@
 "use server";
 import SecureFetch from "@/lib/secure-fetch";
-import { deleteSession } from "@/lib/session";
 import { IUser } from "@/types/user.type";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
@@ -16,11 +15,14 @@ export async function hasInitialProfile() {
 
     // If has initial profile
     if (data) {
-      return true;
+      redirect("/profile");
     } else {
       return false;
     }
   } catch (error: unknown) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
     if (typeof error === "object") {
       const status = (error as any)?.status;
       const data = (error as any)?.data;
@@ -61,7 +63,7 @@ export async function getUserProfile() {
     if (status == 404) {
       redirect("/profile-setup");
     } else if (status == 401) {
-      await deleteSession();
+      // we can programatically handle 401 errors here
       redirect("/login");
     } else {
       const errorDataObj = (error as any)?.data;

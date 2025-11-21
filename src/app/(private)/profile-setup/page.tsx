@@ -1,3 +1,4 @@
+"use server";
 import { InitialProfileFormState } from "@/actions/profile.action";
 import { hasInitialProfile } from "@/dal/profile.dal";
 
