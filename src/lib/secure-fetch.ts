@@ -1,7 +1,8 @@
 "use server";
+import { redirect } from "next/navigation";
 import {
   getApiAccessToken,
-  invalidateAndRedirect,
+  getRefreshToken,
   updateSessionToken,
 } from "./session";
 
@@ -33,27 +34,31 @@ export default async function SecureFetch(
 
     // if unauthorized
     if (res.status == 401) {
-      // check if  access token is expired
+      // check if access token is expired and if there is an existing refresh token in cookies
+      // Note. accessToken is automatically removed from the cookies when it hits its expiration time (in short it is expired)
+      const refreshToken = await getRefreshToken();
       if (
-        errorResponseObj.message.includes("token") ||
-        errorResponseObj.message.includes("expire") == true
+        // errorResponseObj.message.includes("token") ||
+        // errorResponseObj.message.includes("expire") == true
+        !token &&
+        refreshToken
       ) {
         // Send request to NEXT JS Refresh token endpoint
-        const refReshEndpointResponse = await fetch(
-          `${process.env.BASE_API_URL}${"/refresh-token"}`,
-          { credentials: "include" }
-        );
         // const refReshEndpointResponse = await fetch(
-        //   `${process.env.NEXT_PUBLIC_APP_URL}${"/api/auth/refresh-token"}`,
-        //   {
-        //     method: "POST",
-        //     credentials: "include",
-        //     headers: {
-        //       "Content-type": "application/json",
-        //       Authorization: `Bearer ${token}`,
-        //     },
-        //   }
+        //   `${process.env.BASE_API_URL}${"/refresh-token"}`,
+        //   { credentials: "include", method: "POST" }
         // );
+        const refReshEndpointResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}${"/api/auth/refresh-token"}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: `Bearer ${refreshToken}`,
+            },
+          }
+        );
 
         // Redirect to login if refresh token is not successful
         if (!refReshEndpointResponse.ok) {
@@ -61,15 +66,19 @@ export default async function SecureFetch(
           // cookieStore.delete("access_token");
           // cookieStore.delete("user_token");
           // await deleteSession();
-          // redirect("/login");
-          await invalidateAndRedirect();
+          redirect("/login");
+          // await invalidateAndRedirect();
         } else {
           // Update token and Retry again
           const responseObj = await refReshEndpointResponse.json();
+
+          const responseCookies = responseObj.cookies;
+          const acTok = responseCookies.get("access_token");
+
           // const newAccessToken = responseObj.access_token;
           const newAccessToken = await getApiAccessToken(); // retrieve the new access token
           if (newAccessToken) {
-            await updateSessionToken(newAccessToken);
+            await updateSessionToken(responseCookies.get("access_token;"));
           }
 
           // retry request again

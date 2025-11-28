@@ -2,7 +2,7 @@
 
 import { createSession } from "@/lib/session";
 import { extractErrors } from "@/lib/utils";
-import { ISignUpResponse } from "@/types/auth.type";
+import { ILoginResponse, ISignUpResponse } from "@/types/auth.type";
 import { IBaseFormState } from "@/types/common.type";
 import z from "zod";
 import SecureFetch from "../lib/secure-fetch";
@@ -58,7 +58,7 @@ export async function login(initialState: ILoginFormState, formData: FormData) {
   try {
     // login request
     const requestBodyPayload = JSON.stringify(rawData);
-    const data = await SecureFetch("/auth/login", {
+    const data: ILoginResponse = await SecureFetch("/auth/login", {
       headers: {
         "Content-Type": "application/json",
       },
@@ -73,6 +73,9 @@ export async function login(initialState: ILoginFormState, formData: FormData) {
         email: data.user.email,
       },
       access_token: data.access_token,
+      access_token_expires_in: data.access_token_expires_in,
+      refresh_token: data.refresh_token,
+      refresh_token_expires_in: data.refresh_token_expires_in,
     });
 
     const validState: ILoginFormState = {
@@ -210,11 +213,14 @@ export async function signUpAction(
 
     // Create session
     await createSession({
-      access_token: data.access_token,
       user: {
         id: data.user.id,
         email: data.user.email,
       },
+      access_token: data.access_token,
+      access_token_expires_in: data.access_token_expires_in,
+      refresh_token: data.refresh_token,
+      refresh_token_expires_in: data.refresh_token_expires_in,
     });
 
     const validState: ISignUpFormState = {

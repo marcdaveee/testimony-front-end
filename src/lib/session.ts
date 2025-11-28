@@ -57,6 +57,12 @@ export async function getApiAccessToken() {
   return cookieStore.get("access_token")?.value;
 }
 
+export async function getRefreshToken() {
+  const cookieStore = await cookies();
+
+  return cookieStore.get("refresh_token")?.value;
+}
+
 // create session for current user
 export async function createSession(sessionData: SessionPayload) {
   const encryptedUserPayload = await encryptUserPayload(sessionData.user);
@@ -74,7 +80,7 @@ export async function createSession(sessionData: SessionPayload) {
     secure: true,
     path: "/",
     sameSite: "lax",
-    expires: access_token_expires_in,
+    maxAge: access_token_expires_in,
   });
 
   cookieStore.set("access_token", access_token, {
@@ -83,7 +89,7 @@ export async function createSession(sessionData: SessionPayload) {
     secure: true,
     path: "/",
     sameSite: "lax",
-    expires: access_token_expires_in,
+    maxAge: access_token_expires_in,
   });
 
   cookieStore.set("refresh_token", refresh_token, {
@@ -92,7 +98,7 @@ export async function createSession(sessionData: SessionPayload) {
     secure: true,
     path: "/",
     sameSite: "lax",
-    expires: refresh_token_expires_in,
+    maxAge: refresh_token_expires_in,
   });
 }
 

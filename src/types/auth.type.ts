@@ -10,3 +10,5 @@ export interface ILoginResponse {
 }
 
 export interface ISignUpResponse extends ILoginResponse {}
+
+export interface IRefreshTokenResponse extends ILoginResponse {}
